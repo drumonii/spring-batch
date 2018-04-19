@@ -134,23 +134,12 @@ public class StepScopeAnnotatedListenerIntegrationTests {
 
 		@Bean
 		public ItemProcessor<String, String> processor() {
-			return new ItemProcessor<String, String>() {
-
-				@Override
-				public String process(String item) throws Exception {
-					return item;
-				}
-			};
+			return item -> item;
 		}
 
 		@Bean
 		public ItemWriter<String> writer() {
-			return new ItemWriter<String>() {
-
-				@Override
-				public void write(List<? extends String> items)
-						throws Exception {
-				}
+			return items -> {
 			};
 		}
 	}

@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -133,12 +132,8 @@ public class JobRepositoryTestUtilsTests {
 	@Test
 	public void testCreateJobExecutionsWithIncrementer() throws Exception {
 		utils = new JobRepositoryTestUtils(jobRepository, dataSource);
-		utils.setJobParametersIncrementer(new JobParametersIncrementer() {
-			@Override
-			public JobParameters getNext(JobParameters parameters) {
-				return new JobParametersBuilder().addString("foo","bar").toJobParameters();
-			}
-		});
+		utils.setJobParametersIncrementer(
+				parameters -> new JobParametersBuilder().addString("foo","bar").toJobParameters());
 		List<JobExecution> list = utils.createJobExecutions(1);
 		assertEquals(1, list.size());
 		assertEquals("bar", list.get(0).getJobParameters().getString("foo"));

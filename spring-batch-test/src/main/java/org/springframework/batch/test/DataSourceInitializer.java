@@ -32,7 +32,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
@@ -119,38 +118,33 @@ public class DataSourceInitializer implements InitializingBean, DisposableBean {
 		if (scriptResource == null || !scriptResource.exists())
 			return;
 		TransactionTemplate transactionTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
-		transactionTemplate.execute(new TransactionCallback<Void>() {
-
-            @Override
-			public Void doInTransaction(TransactionStatus status) {
-				JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-				String[] scripts;
-				try {
-					scripts = StringUtils.delimitedListToStringArray(stripComments(IOUtils.readLines(scriptResource
-							.getInputStream(), "UTF-8")), ";");
-				}
-				catch (IOException e) {
-					throw new BeanInitializationException("Cannot load script from [" + scriptResource + "]", e);
-				}
-				for (int i = 0; i < scripts.length; i++) {
-					String script = scripts[i].trim();
-					if (StringUtils.hasText(script)) {
-						try {
-							jdbcTemplate.execute(script);
+		transactionTemplate.execute((TransactionCallback<Void>) status -> {
+			JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+			String[] scripts;
+			try {
+				scripts = StringUtils.delimitedListToStringArray(stripComments(IOUtils.readLines(scriptResource
+						.getInputStream(), "UTF-8")), ";");
+			}
+			catch (IOException e) {
+				throw new BeanInitializationException("Cannot load script from [" + scriptResource + "]", e);
+			}
+			for (int i = 0; i < scripts.length; i++) {
+				String script = scripts[i].trim();
+				if (StringUtils.hasText(script)) {
+					try {
+						jdbcTemplate.execute(script);
+					}
+					catch (DataAccessException e) {
+						if (ignoreFailedDrop && script.toLowerCase().startsWith("drop")) {
+							logger.debug("DROP script failed (ignoring): " + script);
 						}
-						catch (DataAccessException e) {
-							if (ignoreFailedDrop && script.toLowerCase().startsWith("drop")) {
-								logger.debug("DROP script failed (ignoring): " + script);
-							}
-							else {
-								throw e;
-							}
+						else {
+							throw e;
 						}
 					}
 				}
-				return null;
 			}
-
+			return null;
 		});
 
 	}

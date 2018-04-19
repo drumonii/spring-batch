@@ -15,8 +15,6 @@
  */
 package org.springframework.batch.test;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +37,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 
 /**
@@ -171,12 +168,7 @@ public class JobRepositoryTestUtils extends AbstractJdbcBatchMetadataDao impleme
 		for (JobExecution jobExecution : list) {
 			List<Long> stepExecutionIds = jdbcTemplate.query(
 					getQuery("select STEP_EXECUTION_ID from %PREFIX%STEP_EXECUTION where JOB_EXECUTION_ID=?"),
-					new RowMapper<Long>() {
-						@Override
-						public Long mapRow(ResultSet rs, int rowNum) throws SQLException {
-							return rs.getLong(1);
-						}
-					}, jobExecution.getId());
+					(rs, rowNum) -> rs.getLong(1), jobExecution.getId());
 			for (Long stepExecutionId : stepExecutionIds) {
 				jdbcTemplate.update(getQuery("delete from %PREFIX%STEP_EXECUTION_CONTEXT where STEP_EXECUTION_ID=?"),
 						stepExecutionId);
