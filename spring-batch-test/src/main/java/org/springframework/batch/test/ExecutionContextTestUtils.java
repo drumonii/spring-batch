@@ -40,7 +40,7 @@ public class ExecutionContextTestUtils {
 
 	public static <T> T getValueFromStepInJob(JobExecution jobExecution, String stepName, String key) {
 		StepExecution stepExecution = null;
-		List<String> stepNames = new ArrayList<String>();
+		List<String> stepNames = new ArrayList<>();
 		for (StepExecution candidate : jobExecution.getStepExecutions()) {
 			String name = candidate.getStepName();
 			stepNames.add(name);
